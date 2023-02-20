@@ -29,12 +29,14 @@ FVertexOutput UFlatShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int3
 	if (InVertexNum == 2)
 	{
 		// 设置灯光信息
-		Shiness = InModel->Shiness;
+		//Shiness = InModel->Shiness;
 		auto Temp1 = WorldPosArray[1] - WorldPosArray[0];
 		auto Temp2 = WorldPosArray[2] - WorldPosArray[0];
 		N = Temp2.Cross(Temp1);
 		N.Normalize();
-		V = (HUD->CameraTransform.GetLocation() - WorldPosArray[2]);
+
+		//V = (HUD->CameraTransform.GetLocation() - WorldPosArray[2]);
+		V = (CameralPos - WorldPosArray[2]);
 		V.Normalize();
 		
 		SetColor(HUD->Lights);
@@ -48,13 +50,7 @@ FVertexOutput UFlatShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int3
 	//-----------
 	Output.VertexPosCVV = Matrix.TransformPosition(Vertex);
 
-	//if (GEngine) {
-	//	// 在屏幕上打印 debug 信息
-	//	auto T = Output.VertexPosCVV;
-	//	GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("CVV：%f, %f, %f, %f"), T.X, T.Y, T.Z, T.W));
-	//	GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("Vertex：%f, %f, %f"), Vertex.X, Vertex.Y, Vertex.Z));
-	//}
-
+	
 	return Output;
 }
 
@@ -79,6 +75,19 @@ void UFlatShader::SetColor(TArray<AMyLightSourceBase*> Lights)
 		DiffuseColor += FactorLightSourceColor * Diffuse;
 		SpecularColor += FactorLightSourceColor * Speculat;
 	}
+	
+	ResultColor = Ka.Cross(AmbientColor) + Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor);
+
+}
+
+void UFlatShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor)
+{
+	Ka = InKa;
+	Kd = InKd;
+	Ks = InKs;
+	Shiness = InShiness;
+	CameralPos = InCameraPos;
+	AmbientColor = InAmbientColor;
 }
 
 void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, const FVector& InV,
@@ -89,10 +98,18 @@ void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, 
 	auto Temp = (InL + InV); 
 	Temp.Normalize();
 	OutSpeculat = FMath::Pow(FMath::Max(0, Temp.Dot(InN)), Shiness);
+
+	if (GEngine) {
+
+		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutDiffuse：%f"), OutDiffuse));
+		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutSpeculat：%f"), OutSpeculat));
+	}
+
 }
 
 
-FVector UFlatShader::FragmentShader(FVector InKa, FVector InKd, FVector InKs, FVector AmbientColor)
+FVector UFlatShader::FragmentShader()
 {
-	return InKa.Cross(AmbientColor) + InKd.Cross(DiffuseColor) + InKs.Cross(SpecularColor);
+	return ResultColor;
+	//return InKa.Cross(AmbientColor) + InKd.Cross(DiffuseColor) + InKs.Cross(SpecularColor);
 }

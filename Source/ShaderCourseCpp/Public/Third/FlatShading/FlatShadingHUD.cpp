@@ -112,10 +112,10 @@ void AFlatShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMatri
 		Model->Faces.Add(FTriangleFace(IndexArray));
 	}
 
-	Model->ModelShader = SpawnShader(ShaderType);
+	Model->ModelShader = SpawnShader(ShaderType, Model);
 }
 
-UIShader* AFlatShadingHUD::SpawnShader(EShaderType InShaderType)
+UIShader* AFlatShadingHUD::SpawnShader(EShaderType InShaderType, UMyModel* Model)
 {
 	UIShader* Shader = nullptr;
 	switch (InShaderType)
@@ -127,7 +127,12 @@ UIShader* AFlatShadingHUD::SpawnShader(EShaderType InShaderType)
 	case EShaderType::ESimpleShader:
 		break;
 	case EShaderType::EFlatShader:
-		Shader = NewObject<UFlatShader>();
+	{
+		UFlatShader* FlatShader = NewObject<UFlatShader>();
+		FlatShader->Init(Model->Ka, Model->Kd, Model->Ks, Model->Shiness, CameraTransform.GetLocation(), AmbientColor);
+		Shader = FlatShader;
+	}
+	break;
 	default:
 		break;
 	}
@@ -199,7 +204,7 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 	}
 	ClipPlanes(OutVertexArray);
 
-	// 经过裁剪后，所有的定点可以组成的三角形的个数
+	// 经过裁剪后，所有的顶点可以组成的三角形的个数
 	int32 Num = OutVertexArray.Num() - 2;
 	TArray<FVertexOutput> TempTriangle;
 	// NDC 的坐标
@@ -262,7 +267,7 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 						if (TempZ < ZValue)
 						{
 							MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
-							FVector Res = InModel->ModelShader->FragmentShader(InModel->Ka, InModel->Kd, InModel->Ks, AmbientColor);
+							FVector Res = InModel->ModelShader->FragmentShader();
 							FPixelColor PixelColor;
 							PixelColor.X = X;
 							PixelColor.Y = Y;

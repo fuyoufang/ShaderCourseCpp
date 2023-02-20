@@ -26,7 +26,19 @@ public:
 	/// <returns></returns>
 	virtual FVertexOutput VertexShader(UMyModel* Model, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD) override;
 
-	virtual FVector FragmentShader(FVector InKa, FVector InKd, FVector InKs, FVector AmbientColor) override;
+	virtual FVector FragmentShader() override;
+
+
+	/// <summary>
+	/// 初始化各个参数
+	/// </summary>
+	/// <param name="InKa"></param>
+	/// <param name="InKd"></param>
+	/// <param name="InKs"></param>
+	/// <param name="InShiness"></param>
+	/// <param name="InCameraPos"></param>
+	/// <param name="InAmbientColor"></param>
+	void Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor);
 
 private:
 	TMap<int32, FVector> WorldPosArray;
@@ -51,6 +63,17 @@ private:
 
 	FVector SpecularColor;
 
+	FVector Ka;
+
+	FVector Kd;
+
+	FVector Ks;
+
+	FVector AmbientColor;
+
+	FVector CameralPos;
+	
+	FVector ResultColor;
 	/// <summary>
 	/// 
 	/// </summary>

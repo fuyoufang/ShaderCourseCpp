@@ -81,6 +81,9 @@ public:
 	/// </summary>
 	TArray<class AMyLightSourceBase*> Lights;
 
+	/// <summary>
+	/// 环境光颜色
+	/// </summary>
 	FVector AmbientColor = FVector(0, 0.2, 0.3);
 
 	// 模型信息
@@ -126,7 +129,7 @@ private:
 	/// <param name="InShiness"></param>
 	void LoadModel(UStaticMesh* InStaticMesh, FTransform InModelMatrix, FVector InKa, FVector InKd, FVector InKs, float InShiness);
 
-	UIShader* SpawnShader(EShaderType InShaderType);
+	UIShader* SpawnShader(EShaderType InShaderType, UMyModel* Model);
 
 	void SetGMaxIndex();
 

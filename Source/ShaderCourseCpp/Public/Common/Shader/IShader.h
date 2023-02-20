@@ -18,7 +18,7 @@ public:
 
 	virtual FVertexOutput VertexShader(UMyModel* Model, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD);
 
-	virtual FVector FragmentShader(FVector InKa, FVector InKd, FVector InKs, FVector AmbientColor);
+	virtual FVector FragmentShader();
 
 	virtual EShaderType GetShaderType();
 };
