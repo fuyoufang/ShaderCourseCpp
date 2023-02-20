@@ -196,9 +196,9 @@ void AFlatShadingHUD::BufferReset()
 void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 {
 	TArray<FVertexOutput> OutVertexArray;
+	auto Shader = InModel->ModelShader;
 	for (int32 i = 0; i < 3; i++)
 	{
-		auto Shader = InModel->ModelShader;
 		FVertexOutput Output = Shader->VertexShader(InModel, InFaceNumber, i, this);
 		OutVertexArray.Add(Output);
 	}
@@ -267,7 +267,7 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 						if (TempZ < ZValue)
 						{
 							MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
-							FVector Res = InModel->ModelShader->FragmentShader();
+							FVector Res = Shader->FragmentShader();
 							FPixelColor PixelColor;
 							PixelColor.X = X;
 							PixelColor.Y = Y;

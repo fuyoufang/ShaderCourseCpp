@@ -24,6 +24,7 @@ FVertexOutput UFlatShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int3
 	const auto& Vertex = InModel->Vertex[VertexIndex];
 	
 	// 缓存模型顶点对应的世界坐标
+	//WorldPosArray.Add
 	WorldPosArray.Add(InVertexNum, InModel->ModelMatrix.TransformVector(Vertex));
 	
 	if (InVertexNum == 2)
