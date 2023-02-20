@@ -32,5 +32,8 @@ public:
 		// 平行光的光照方向是 actor 的相反的方向
 		return GetActorForwardVector() * FVector(-1, -1, -1);
 	}
-};
 
+public:
+	UPROPERTY(VisibleDefaultsOnly, Category = Extras)
+	class UArrowComponent* Arrow;
+};

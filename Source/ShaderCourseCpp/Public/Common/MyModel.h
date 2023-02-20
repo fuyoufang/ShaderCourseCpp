@@ -13,13 +13,13 @@ class SHADERCOURSECPP_API UMyModel: public UObject {
 public:
 	UMyModel();
 
-	TArray<FVector> Verts;
+	TArray<FVector> Vertex;
 	
 	TArray<FTriangleFace> Faces;
 
 	FMatrix ModelMatrix;
 
-	UIShader ModelShader;
+	UIShader* ModelShader;
 
 	FVector Ka;
 
