@@ -17,6 +17,11 @@ public:
 	
 	TArray<FTriangleFace> Faces;
 
+	/// <summary>
+	/// 顶点法线
+	/// </summary>
+	TArray<FVector> Normals;
+
 	FMatrix ModelMatrix;
 
 	UIShader* ModelShader;

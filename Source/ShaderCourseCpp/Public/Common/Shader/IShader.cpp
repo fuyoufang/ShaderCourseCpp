@@ -6,7 +6,7 @@ FVertexOutput UIShader::VertexShader(UMyModel* Model, int32 InFaceNum, int32 InV
     return FVertexOutput();
 }
 
-FVector UIShader::FragmentShader()
+FVector UIShader::FragmentShader(FVector InFragmentShader)
 {
     return FVector();
 }

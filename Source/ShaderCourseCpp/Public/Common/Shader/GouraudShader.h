@@ -4,10 +4,10 @@
 #include "Common/Shader/IShader.h"
 #include "Common/MyModel.h"
 #include "Common/Light/MyLightSourceBase.h"
-#include "FlatShader.generated.h"
+#include "GouraudShader.generated.h"
 
 UCLASS()
-class UFlatShader: public UIShader
+class UGouraudShader : public UIShader
 {
 	GENERATED_BODY()
 
@@ -41,7 +41,10 @@ public:
 	void Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor);
 
 private:
-	TMap<int32, FVector> WorldPosArray;
+	/// <summary>
+	/// 世界坐标
+	/// </summary>
+	FVector WorldPos;
 
 	float Shiness;
 

@@ -1,19 +1,16 @@
-#include "Common/Shader/FlatShader.h"
-#include "Third/FlatShading/FlatShadingHUD.h"
+#include "Common/Shader/GouraudShader.h"
+#include "Third/GouraudShading/GouraudShadingHUD.h"
 #include "Common/MyModel.h"
 #include "Common/Light/MyDirectionLight.h"
-#include "Third/GouraudShading/GouraudShadingHUD.h"
 
-EShaderType UFlatShader::GetShaderType()
+EShaderType UGouraudShader::GetShaderType()
 {
-	return EShaderType::EFlatShader;
+	return EShaderType::EGouraudShader;
 }
 
-FVertexOutput UFlatShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD)
+FVertexOutput UGouraudShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD)
 {
-	//AFlatShadingHUD* HUD = Cast<AFlatShadingHUD>(InHUD);
 	AGouraudShadingHUD* HUD = Cast<AGouraudShadingHUD>(InHUD);
-	
 	if (HUD == nullptr)
 	{
 		return FVertexOutput();
@@ -26,38 +23,40 @@ FVertexOutput UFlatShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int3
 	// 顶点
 	const auto& Vertex = InModel->Vertex[VertexIndex];
 	
-	// 缓存模型顶点对应的世界坐标
-	//WorldPosArray.Add
-	WorldPosArray.Add(InVertexNum, InModel->ModelMatrix.TransformVector(Vertex));
+	WorldPos = InModel->ModelMatrix.TransformVector(Vertex);
 	
-	if (InVertexNum == 2)
-	{
-		// 设置灯光信息
-		//Shiness = InModel->Shiness;
-		auto Temp1 = WorldPosArray[1] - WorldPosArray[0];
-		auto Temp2 = WorldPosArray[2] - WorldPosArray[0];
-		N = Temp2.Cross(Temp1);
-		N.Normalize();
+	// 计算法线
+	// GetTransposed 获得转置
+	N = InModel->ModelMatrix.GetTransposed().TransformVector(InModel->Normals[VertexIndex]);
+	N.Normalize();
 
-		//V = (HUD->CameraTransform.GetLocation() - WorldPosArray[2]);
-		V = (CameralPos - WorldPosArray[2]);
-		V.Normalize();
+	
+	V = (CameralPos - WorldPos);
+	V.Normalize();
 		
-		SetColor(HUD->Lights);
-	}
+	SetColor(HUD->Lights);
+	
 
 	// 计算 CVV 空间坐标。
 	FMatrix Matrix = InModel->ModelMatrix* HUD->ViewMatrix* HUD->PerspectiveMatrix;
 	auto Output = FVertexOutput();
+	Output.FragmentColor = ResultColor;
 	//----------
 	// TODO 此处用错了，之前用的 Matrix.TransformVector
+	// TransformPosition 针对坐标
+	// TransformVector 针对向量
 	//-----------
 	Output.VertexPosCVV = Matrix.TransformPosition(Vertex);
+	if (GEngine) {
 
+		//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), ResultColor.X, ResultColor.Y, ResultColor.Z));
+		//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), InModel->Normals[VertexIndex].X, InModel->Normals[VertexIndex].Y, InModel->Normals[VertexIndex].Z));
+	}
+	
 	return Output;
 }
 
-void UFlatShader::SetColor(TArray<AMyLightSourceBase*> Lights)
+void UGouraudShader::SetColor(TArray<AMyLightSourceBase*> Lights)
 {
 	// 首先清空数据
 	DiffuseColor = FVector(0, 0, 0);
@@ -77,13 +76,18 @@ void UFlatShader::SetColor(TArray<AMyLightSourceBase*> Lights)
 		auto FactorLightSourceColor = Light->LightSourceColor * Factor;
 		DiffuseColor += FactorLightSourceColor * Diffuse;
 		SpecularColor += FactorLightSourceColor * Speculat;
+
+		if (Diffuse < 0 || Speculat < 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("less zero")));
+
+		}
 	}
 	
-	ResultColor = Ka.Cross(AmbientColor) + Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor);
-
+	ResultColor = Ka.Cross(AmbientColor) + Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor); 
 }
 
-void UFlatShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor)
+void UGouraudShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor)
 {
 	Ka = InKa;
 	Kd = InKd;
@@ -93,7 +97,7 @@ void UFlatShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness
 	AmbientColor = InAmbientColor;
 }
 
-void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, const FVector& InV,
+void UGouraudShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, const FVector& InV,
 	float& OutDiffuse, float& OutSpeculat)
 {
 	OutDiffuse = FMath::Max(0, InL.Dot(InN));
@@ -110,8 +114,7 @@ void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, 
 
 }
 
-
-FVector UFlatShader::FragmentShader(FVector InFragmentShader)
+FVector UGouraudShader::FragmentShader(FVector InFragmentShader)
 {
 	return ResultColor;
 }

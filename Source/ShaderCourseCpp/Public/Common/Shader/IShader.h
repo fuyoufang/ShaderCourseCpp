@@ -18,7 +18,14 @@ public:
 
 	virtual FVertexOutput VertexShader(UMyModel* Model, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD);
 
-	virtual FVector FragmentShader();
+	/// <summary>
+	/// 环境光 + 高光 + 慢反射光
+	/// 
+	/// 可以对计算的颜色进行修改、映射
+	/// </summary>
+	/// <param name="InFragmentShader"></param>
+	/// <returns></returns>
+	virtual FVector FragmentShader(FVector InFragmentShader);
 
 	virtual EShaderType GetShaderType();
 };

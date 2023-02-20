@@ -1,19 +1,21 @@
 
-#include "FlatShadingHUD.h"
+#include "GouraudShadingHUD.h"
+
 #include "EngineUtils.h"
 #include "Common/Light/MyLightSourceBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Common/Shader/FlatShader.h"
+#include "Common/Shader/GouraudShader.h"
 #include "KismetProceduralMeshLibrary.h"
 #include <Kismet/KismetMathLibrary.h>
 
-AFlatShadingHUD::AFlatShadingHUD()
+AGouraudShadingHUD::AGouraudShadingHUD()
 {
 	CameraTransform = FTransform(FRotator(), FVector());
 	MyPerspectiveInfo = FPerspectiveInfo(90, 2, 10, 1250);
 }
 
-void AFlatShadingHUD::BeginPlay()
+void AGouraudShadingHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -45,7 +47,7 @@ void AFlatShadingHUD::BeginPlay()
 	UpdateBuffer();
 }
 
-void AFlatShadingHUD::DrawHUD()
+void AGouraudShadingHUD::DrawHUD()
 {
 	Super::DrawHUD();
 
@@ -55,7 +57,7 @@ void AFlatShadingHUD::DrawHUD()
 	}
 }
 
-void AFlatShadingHUD::ResetLights()
+void AGouraudShadingHUD::ResetLights()
 {
 	Lights.Empty();
 	// 方法一
@@ -71,7 +73,7 @@ void AFlatShadingHUD::ResetLights()
 	}
 }
 
-void AFlatShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMatrix, FVector InKa, FVector InKd, FVector InKs, float InShiness)
+void AGouraudShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMatrix, FVector InKa, FVector InKd, FVector InKs, float InShiness)
 {
 	if (!IsValid(InLoadMesh))
 	{
@@ -99,6 +101,15 @@ void AFlatShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMatri
 	Model->Kd = InKd;
 	Model->Ks = InKs;
 	Model->Shiness = InShiness;
+	Model->Normals = Normals;
+
+	if (GEngine) {
+		for (int32 i = 0; i < Normals.Num(); i++) {
+			//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), ResultColor.X, ResultColor.Y, ResultColor.Z));
+			//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), Normals[i].X, Normals[i].Y, Normals[i].Z));
+		}
+		
+	}
 
 	// 将三角面的顶点转换为数组，添加到 faces 中
 	int32 TrianglesCount = TempTriangles.Num() / 3;
@@ -115,7 +126,7 @@ void AFlatShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMatri
 	Model->ModelShader = SpawnShader(ShaderType, Model);
 }
 
-UIShader* AFlatShadingHUD::SpawnShader(EShaderType InShaderType, UMyModel* Model)
+UIShader* AGouraudShadingHUD::SpawnShader(EShaderType InShaderType, UMyModel* Model)
 {
 	UIShader* Shader = nullptr;
 	switch (InShaderType)
@@ -133,25 +144,32 @@ UIShader* AFlatShadingHUD::SpawnShader(EShaderType InShaderType, UMyModel* Model
 		Shader = FlatShader;
 	}
 	break;
+	case EShaderType::EGouraudShader:
+	{
+		UGouraudShader* GouraudShader = NewObject<UGouraudShader>();
+		GouraudShader->Init(Model->Ka, Model->Kd, Model->Ks, Model->Shiness, CameraTransform.GetLocation(), AmbientColor);
+		Shader = GouraudShader;
+	}
+	break;
 	default:
 		break;
 	}
 	return Shader;
 }
 
-void AFlatShadingHUD::SetGMaxIndex() 
+void AGouraudShadingHUD::SetGMaxIndex() 
 {
 	GMaxWidthIndex = GWidth - 1;
 
 	GMaxHeightIndex = GHeight - 1;
 }
 
-void AFlatShadingHUD::SetViewMatrix()
+void AGouraudShadingHUD::SetViewMatrix()
 {
 	ViewMatrix = CameraTransform.Inverse().ToMatrixWithScale();
 }
 
-void AFlatShadingHUD::SetPerspectiveMatrix()
+void AGouraudShadingHUD::SetPerspectiveMatrix()
 {
 	// 根据 MVP = ModelMatrix * ViewMatrix * PserspectiveMatrix ，可以计算出 MVP。
 
@@ -171,7 +189,7 @@ void AFlatShadingHUD::SetPerspectiveMatrix()
 	PerspectiveMatrix = FMatrix(Plan0, Plan1, Plan2, Plan3);
 }
 
-void AFlatShadingHUD::UpdateBuffer()
+void AGouraudShadingHUD::UpdateBuffer()
 {
 	BufferReset();
 
@@ -186,14 +204,14 @@ void AFlatShadingHUD::UpdateBuffer()
 	}
 }
 
-void AFlatShadingHUD::BufferReset()
+void AGouraudShadingHUD::BufferReset()
 {
 	//MyFrameBuffer.Reset();
 	MyNewFrameBuffer.ZBuffer.Reset();
 	MyNewFrameBuffer.ColorBuffer.Reset();
 }
 
-void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
+void AGouraudShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 {
 	TArray<FVertexOutput> OutVertexArray;
 	auto Shader = InModel->ModelShader;
@@ -260,14 +278,32 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 						auto Xt = 1 / (AlphaDivideX1 + BetaDivideX2 + GammaDivideX3);
 
 						FVector PerspectiveCorrect = FVector(AlphaDivideX1 * Xt, BetaDivideX2 * Xt, GammaDivideX3 * Xt);
-						
+						// 计算插值 TempZ
 						auto PixelIndex = GetPixelIndex(X, Y);
 						auto ZValue = GetPixelDepth(PixelIndex);
 						auto TempZ = Xt * (Alpha + Beta + Gamma);
 						if (TempZ < ZValue)
 						{
+							// 计算插值 颜色
+							auto Color = (AlphaDivideX1 * TempTriangle[0].FragmentColor
+								+ BetaDivideX2 * TempTriangle[1].FragmentColor
+								+ GammaDivideX3 * TempTriangle[2].FragmentColor) 
+								* Xt;
+
+							if (TempTriangle[0].FragmentColor.Equals(TempTriangle[1].FragmentColor)
+								&& TempTriangle[0].FragmentColor.Equals(TempTriangle[1].FragmentColor)) {
+								GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("true ")));
+							}
+							else
+							{
+								//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("false")));
+
+							}
+							//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("Color:%f, %f, %f "), Color.X, Color.Y, Color.Z));
+							
+
 							MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
-							FVector Res = Shader->FragmentShader(FVector::Zero());
+							FVector Res = Shader->FragmentShader(Color);
 							FPixelColor PixelColor;
 							PixelColor.X = X;
 							PixelColor.Y = Y;
@@ -284,7 +320,7 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 	}
 }
 
-void AFlatShadingHUD::ClipPlanes(TArray<FVertexOutput>& InVertexArray)
+void AGouraudShadingHUD::ClipPlanes(TArray<FVertexOutput>& InVertexArray)
 {
 	ClipWithPlan(EClipPlane::ClipWPlane, InVertexArray);
 	ClipWithPlan(EClipPlane::ClipXNearPlane, InVertexArray);
@@ -295,7 +331,7 @@ void AFlatShadingHUD::ClipPlanes(TArray<FVertexOutput>& InVertexArray)
 	ClipWithPlan(EClipPlane::ClipZBottomPlane, InVertexArray);
 }
 
-void AFlatShadingHUD::ClipWithPlan(EClipPlane InClipPlane, TArray<FVertexOutput>& InVertexArray)
+void AGouraudShadingHUD::ClipWithPlan(EClipPlane InClipPlane, TArray<FVertexOutput>& InVertexArray)
 {
 	TArray<FVertexOutput> TempArray;
 
@@ -321,6 +357,7 @@ void AFlatShadingHUD::ClipWithPlan(EClipPlane InClipPlane, TArray<FVertexOutput>
 			auto VertexPosCVV = Vector4Lerp(PreVertex.VertexPosCVV, CurrentVertex.VertexPosCVV, Alpha);
 			auto VertexOutput = FVertexOutput();
 			VertexOutput.VertexPosCVV = VertexPosCVV;
+			VertexOutput.FragmentColor = FMath::Lerp(PreVertex.FragmentColor, CurrentVertex.FragmentColor, Alpha);
 			TempArray.Add(VertexOutput);
 		}
 		// 如果当前点在平面内，则添加到 tempArray 中
@@ -333,7 +370,7 @@ void AFlatShadingHUD::ClipWithPlan(EClipPlane InClipPlane, TArray<FVertexOutput>
 	InVertexArray.Append(TempArray);
 }
 
-bool AFlatShadingHUD::IsInsidePlane(EClipPlane InClipPlane, FVector4 InVertexPosCVV)
+bool AGouraudShadingHUD::IsInsidePlane(EClipPlane InClipPlane, FVector4 InVertexPosCVV)
 {
 	switch (InClipPlane)
 	{
@@ -356,7 +393,7 @@ bool AFlatShadingHUD::IsInsidePlane(EClipPlane InClipPlane, FVector4 InVertexPos
 	}
 }
 
-float AFlatShadingHUD::GetIntersecRatio(FVector4 InPreVertex, FVector4 InCurVertex, EClipPlane InClipPlane)
+float AGouraudShadingHUD::GetIntersecRatio(FVector4 InPreVertex, FVector4 InCurVertex, EClipPlane InClipPlane)
 {
 	switch (InClipPlane)
 	{
@@ -390,12 +427,12 @@ float AFlatShadingHUD::GetIntersecRatio(FVector4 InPreVertex, FVector4 InCurVert
 	
 }
 
-FVector4 AFlatShadingHUD::Vector4Lerp(FVector4 InPreVertex, FVector4 InCurVertex, float InAlpha)
+FVector4 AGouraudShadingHUD::Vector4Lerp(FVector4 InPreVertex, FVector4 InCurVertex, float InAlpha)
 {
 	return InPreVertex + (InCurVertex - InPreVertex) * InAlpha;
 }
 
-bool AFlatShadingHUD::IsBackface(TArray<FVector> InVertexPosNDC)
+bool AGouraudShadingHUD::IsBackface(TArray<FVector> InVertexPosNDC)
 {
 	// 1. 计算三角面的法向量
 	// 2. 法向量和相机方向的点乘在 [-1, 0] 之间时为正面
@@ -408,7 +445,7 @@ bool AFlatShadingHUD::IsBackface(TArray<FVector> InVertexPosNDC)
 	return Result >= 0;
 }
 
-void AFlatShadingHUD::TriangleSetup(const TArray<FVector>& InScreenPosArray, int32& OutXMin, int32& OutYMin, int32& OutXMax, int32& OutYMax)
+void AGouraudShadingHUD::TriangleSetup(const TArray<FVector>& InScreenPosArray, int32& OutXMin, int32& OutYMin, int32& OutXMax, int32& OutYMax)
 {
 	
 	TArray<float> Xs;
@@ -425,7 +462,7 @@ void AFlatShadingHUD::TriangleSetup(const TArray<FVector>& InScreenPosArray, int
 	OutYMax = FMath::Clamp(FMath::TruncToInt32(FMath::Max(Ys)), 0, GMaxHeightIndex);
 }
 
-void AFlatShadingHUD::ComputeBarycentric(float InX, float InY, const TArray<FVector>& InScreenPosArray, float& OutAlpha, float& OutBeta, float& OutGamma)
+void AGouraudShadingHUD::ComputeBarycentric(float InX, float InY, const TArray<FVector>& InScreenPosArray, float& OutAlpha, float& OutBeta, float& OutGamma)
 {
 	auto X1 = InScreenPosArray[0].X;
 	auto Y1 = InScreenPosArray[0].Y;
@@ -445,19 +482,19 @@ void AFlatShadingHUD::ComputeBarycentric(float InX, float InY, const TArray<FVec
 	OutGamma = 1 - OutAlpha - OutBeta;
 }
 
-bool AFlatShadingHUD::IsInsideTriangle(float InAlpha, float InBeta, float InGamma)
+bool AGouraudShadingHUD::IsInsideTriangle(float InAlpha, float InBeta, float InGamma)
 {
 	// float 类型的数据和 0 进行比较时，可能会产生错误的判断，所以需要和一个较小的数字进行比较
 	float Temp = -0.001;
 	return InAlpha > Temp && InBeta > Temp && InGamma > Temp;
 }
 
-int32 AFlatShadingHUD::GetPixelIndex(int32 InPosX, int32 InPoxY)
+int32 AGouraudShadingHUD::GetPixelIndex(int32 InPosX, int32 InPoxY)
 {
 	return InPoxY * FMath::TruncToInt32(GWidth) + InPosX;
 }
 
-float AFlatShadingHUD::GetPixelDepth(int32 InPixelIndex)
+float AGouraudShadingHUD::GetPixelDepth(int32 InPixelIndex)
 {
 	float* Result = MyNewFrameBuffer.ZBuffer.Find(InPixelIndex);
 	if (Result == nullptr)
