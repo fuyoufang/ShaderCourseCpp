@@ -5,5 +5,5 @@
 AMyDirectionLight::AMyDirectionLight()
 {
 	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
-	LightSourceColor = FVector(0, -1, 1);
+	LightSourceColor = FVector(0, 0, 1);
 }

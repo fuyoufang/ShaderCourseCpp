@@ -50,10 +50,9 @@ void AGouraudShadingHUD::BeginPlay()
 void AGouraudShadingHUD::DrawHUD()
 {
 	Super::DrawHUD();
-
-	for (const auto& Color : MyNewFrameBuffer.ColorBuffer)
+	for (const auto& PixelColor : MyNewFrameBuffer.ColorBuffer)
 	{
-		DrawRect(Color.Value.Color, Color.Value.X, Color.Value.Y, 1, 1);
+		DrawRect(PixelColor.Value.Color, PixelColor.Value.X, PixelColor.Value.Y, 1, 1);
 	}
 }
 
@@ -102,14 +101,6 @@ void AGouraudShadingHUD::LoadModel(UStaticMesh* InLoadMesh, FTransform InModelMa
 	Model->Ks = InKs;
 	Model->Shiness = InShiness;
 	Model->Normals = Normals;
-
-	if (GEngine) {
-		for (int32 i = 0; i < Normals.Num(); i++) {
-			//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), ResultColor.X, ResultColor.Y, ResultColor.Z));
-			//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), Normals[i].X, Normals[i].Y, Normals[i].Z));
-		}
-		
-	}
 
 	// 将三角面的顶点转换为数组，添加到 faces 中
 	int32 TrianglesCount = TempTriangles.Num() / 3;
@@ -222,14 +213,14 @@ void AGouraudShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 	}
 	ClipPlanes(OutVertexArray);
 
-	// 经过裁剪后，所有的顶点可以组成的三角形的个数
-	int32 Num = OutVertexArray.Num() - 2;
 	TArray<FVertexOutput> TempTriangle;
 	// NDC 的坐标
 	TArray<FVector> VertexPosArrayNDC;
 	// 屏幕坐标
 	TArray<FVector> ScreenPosArray;
 
+	// 经过裁剪后，所有的顶点可以组成的三角形的个数
+	int32 Num = OutVertexArray.Num() - 2;
 	for (int32 i = 0; i < Num; i++)
 	{
 		int32 Index0 = 0;
@@ -270,47 +261,39 @@ void AGouraudShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 					float InY = Y + 0.5;
 					float Alpha, Beta, Gamma;
 					ComputeBarycentric(InX, InY, ScreenPosArray, Alpha, Beta, Gamma);
-					if (IsInsideTriangle(Alpha, Beta, Gamma))
+					if (!IsInsideTriangle(Alpha, Beta, Gamma))
 					{
-						auto AlphaDivideX1 = Alpha / TempTriangle[0].VertexPosCVV.W;
-						auto BetaDivideX2 = Beta / TempTriangle[1].VertexPosCVV.W;
-						auto GammaDivideX3 = Gamma / TempTriangle[2].VertexPosCVV.W;
-						auto Xt = 1 / (AlphaDivideX1 + BetaDivideX2 + GammaDivideX3);
-
-						FVector PerspectiveCorrect = FVector(AlphaDivideX1 * Xt, BetaDivideX2 * Xt, GammaDivideX3 * Xt);
-						// 计算插值 TempZ
-						auto PixelIndex = GetPixelIndex(X, Y);
-						auto ZValue = GetPixelDepth(PixelIndex);
-						auto TempZ = Xt * (Alpha + Beta + Gamma);
-						if (TempZ < ZValue)
-						{
-							// 计算插值 颜色
-							auto Color = (AlphaDivideX1 * TempTriangle[0].FragmentColor
-								+ BetaDivideX2 * TempTriangle[1].FragmentColor
-								+ GammaDivideX3 * TempTriangle[2].FragmentColor) 
-								* Xt;
-
-							if (TempTriangle[0].FragmentColor.Equals(TempTriangle[1].FragmentColor)
-								&& TempTriangle[0].FragmentColor.Equals(TempTriangle[1].FragmentColor)) {
-								GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("true ")));
-							}
-							else
-							{
-								//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("false")));
-
-							}
-							//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("Color:%f, %f, %f "), Color.X, Color.Y, Color.Z));
-							
-
-							MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
-							FVector Res = Shader->FragmentShader(Color);
-							FPixelColor PixelColor;
-							PixelColor.X = X;
-							PixelColor.Y = Y;
-							PixelColor.Color = FLinearColor(Res);
-							MyNewFrameBuffer.ColorBuffer.Add(PixelIndex, PixelColor);
-						}
+						continue;
 					}
+
+					auto AlphaDivideX1 = Alpha / TempTriangle[0].VertexPosCVV.W;
+					auto BetaDivideX2 = Beta / TempTriangle[1].VertexPosCVV.W;
+					auto GammaDivideX3 = Gamma / TempTriangle[2].VertexPosCVV.W;
+					auto Xt = 1 / (AlphaDivideX1 + BetaDivideX2 + GammaDivideX3);
+
+					FVector PerspectiveCorrect = FVector(AlphaDivideX1 * Xt, BetaDivideX2 * Xt, GammaDivideX3 * Xt);
+					// 计算插值 TempZ
+					auto PixelIndex = GetPixelIndex(X, Y);
+					auto ZValue = GetPixelDepth(PixelIndex);
+					auto TempZ = Xt * (Alpha + Beta + Gamma);
+					if (TempZ >= ZValue)
+					{
+						continue;
+					}
+					
+					// 计算插值 颜色
+					auto Color = (AlphaDivideX1 * TempTriangle[0].FragmentColor
+						+ BetaDivideX2 * TempTriangle[1].FragmentColor
+						+ GammaDivideX3 * TempTriangle[2].FragmentColor)
+						* Xt;
+
+					MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
+					FVector Res = Shader->FragmentShader(Color);
+					FPixelColor PixelColor;
+					PixelColor.X = X;
+					PixelColor.Y = Y;
+					PixelColor.Color = FLinearColor(Res);
+					MyNewFrameBuffer.ColorBuffer.Add(PixelIndex, PixelColor);
 				}
 			}
 		}

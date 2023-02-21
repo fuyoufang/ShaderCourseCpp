@@ -60,7 +60,7 @@ private:
 
 	FVector V;
 
-	void SetColor(TArray<AMyLightSourceBase*> Lights);
+	FVector GetColor(TArray<AMyLightSourceBase*> Lights);
 
 	FVector DiffuseColor;
 
@@ -75,8 +75,7 @@ private:
 	FVector AmbientColor;
 
 	FVector CameralPos;
-	
-	FVector ResultColor;
+
 	/// <summary>
 	/// 
 	/// </summary>

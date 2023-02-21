@@ -79,8 +79,7 @@ void UFlatShader::SetColor(TArray<AMyLightSourceBase*> Lights)
 		SpecularColor += FactorLightSourceColor * Speculat;
 	}
 	
-	ResultColor = Ka.Cross(AmbientColor) + Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor);
-
+	ResultColor = Ka* AmbientColor + Kd * DiffuseColor + Ks * SpecularColor;
 }
 
 void UFlatShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor)
@@ -107,9 +106,7 @@ void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, 
 		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutDiffuse：%f"), OutDiffuse));
 		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutSpeculat：%f"), OutSpeculat));
 	}*/
-
 }
-
 
 FVector UFlatShader::FragmentShader(FVector InFragmentShader)
 {

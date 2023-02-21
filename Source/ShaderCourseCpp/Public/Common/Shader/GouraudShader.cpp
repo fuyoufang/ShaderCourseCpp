@@ -30,33 +30,24 @@ FVertexOutput UGouraudShader::VertexShader(UMyModel* InModel, int32 InFaceNum, i
 	N = InModel->ModelMatrix.GetTransposed().TransformVector(InModel->Normals[VertexIndex]);
 	N.Normalize();
 
-	
 	V = (CameralPos - WorldPos);
 	V.Normalize();
-		
-	SetColor(HUD->Lights);
 	
-
-	// 计算 CVV 空间坐标。
-	FMatrix Matrix = InModel->ModelMatrix* HUD->ViewMatrix* HUD->PerspectiveMatrix;
 	auto Output = FVertexOutput();
-	Output.FragmentColor = ResultColor;
+	Output.FragmentColor = GetColor(HUD->Lights);
+	// 计算 CVV 空间坐标。
+	FMatrix Matrix = InModel->ModelMatrix * HUD->ViewMatrix * HUD->PerspectiveMatrix;
 	//----------
 	// TODO 此处用错了，之前用的 Matrix.TransformVector
 	// TransformPosition 针对坐标
 	// TransformVector 针对向量
 	//-----------
 	Output.VertexPosCVV = Matrix.TransformPosition(Vertex);
-	if (GEngine) {
-
-		//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), ResultColor.X, ResultColor.Y, ResultColor.Z));
-		//GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("ResultColor：%f：%f：%f"), InModel->Normals[VertexIndex].X, InModel->Normals[VertexIndex].Y, InModel->Normals[VertexIndex].Z));
-	}
 	
 	return Output;
 }
 
-void UGouraudShader::SetColor(TArray<AMyLightSourceBase*> Lights)
+FVector UGouraudShader::GetColor(TArray<AMyLightSourceBase*> Lights)
 {
 	// 首先清空数据
 	DiffuseColor = FVector(0, 0, 0);
@@ -76,15 +67,10 @@ void UGouraudShader::SetColor(TArray<AMyLightSourceBase*> Lights)
 		auto FactorLightSourceColor = Light->LightSourceColor * Factor;
 		DiffuseColor += FactorLightSourceColor * Diffuse;
 		SpecularColor += FactorLightSourceColor * Speculat;
-
-		if (Diffuse < 0 || Speculat < 0)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("less zero")));
-
-		}
 	}
-	
-	ResultColor = Ka.Cross(AmbientColor) + Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor); 
+	// 注意这里是 *，不是 Cross
+	//ResultColor = Ka.Cross(AmbientColor) +Kd.Cross(DiffuseColor) + Ks.Cross(SpecularColor);
+	return Ka * AmbientColor + Kd * DiffuseColor + Ks * SpecularColor;
 }
 
 void UGouraudShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor)
@@ -105,16 +91,9 @@ void UGouraudShader::CalcuteLightIntensity(const FVector& InL, const FVector& In
 	auto Temp = (InL + InV); 
 	Temp.Normalize();
 	OutSpeculat = FMath::Pow(FMath::Max(0, Temp.Dot(InN)), Shiness);
-
-	/*if (GEngine) {
-
-		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutDiffuse：%f"), OutDiffuse));
-		GEngine->AddOnScreenDebugMessage(-1, 9.0f, FColor::Red, FString::Printf(TEXT("OutSpeculat：%f"), OutSpeculat));
-	}*/
-
 }
 
 FVector UGouraudShader::FragmentShader(FVector InFragmentShader)
 {
-	return ResultColor;
+	return InFragmentShader;
 }
