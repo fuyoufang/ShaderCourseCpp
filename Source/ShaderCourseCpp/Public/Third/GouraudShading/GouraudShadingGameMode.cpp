@@ -1,7 +1,7 @@
 #include "GouraudShadingGameMode.h"
 #include "Third/GouraudShading/GouraudShadingHUD.h"
 
-AGroundShadingGameMode::AGroundShadingGameMode()
+AGouraudShadingGameMode::AGouraudShadingGameMode()
 {
 	HUDClass = AGouraudShadingHUD::StaticClass();
 

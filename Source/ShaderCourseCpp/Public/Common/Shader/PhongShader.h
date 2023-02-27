@@ -4,10 +4,10 @@
 #include "Common/Shader/IShader.h"
 #include "Common/MyModel.h"
 #include "Common/Light/MyLightSourceBase.h"
-#include "FlatShader.generated.h"
+#include "PhongShader.generated.h"
 
 UCLASS()
-class UFlatShader: public UIShader
+class UPhongShader : public UIShader
 {
 	GENERATED_BODY()
 
@@ -17,7 +17,7 @@ public:
 	EShaderType GetShaderType() override;
 
 	/// <summary>
-	/// 
+	/// 顶点着色器
 	/// </summary>
 	/// <param name="Model"></param>
 	/// <param name="InFaceNum"></param>
@@ -26,6 +26,7 @@ public:
 	/// <returns></returns>
 	virtual FVertexOutput VertexShader(UMyModel* Model, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD) override;
 
+	/// 片源着色器
 	virtual FVector FragmentShader(FVector InFragmentColor, FVector InNormalWS, FVector InPosWS) override;
 
 
@@ -38,30 +39,14 @@ public:
 	/// <param name="InShiness"></param>
 	/// <param name="InCameraPos"></param>
 	/// <param name="InAmbientColor"></param>
-	void Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor);
+	void Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor, TArray<AMyLightSourceBase*> InLightArray);
 
 private:
-	TMap<int32, FVector> WorldPosArray;
-
+	
 	float Shiness;
 
-	/// <summary>
-	/// 灯光方向
-	/// </summary>
-	FVector L;
+	FVector GetColor(const FVector& InN, const FVector& InV, TArray<AMyLightSourceBase*> Lights);
 
-	/// <summary>
-	/// 三角面的法线
-	/// </summary>
-	FVector N;
-
-	FVector V;
-
-	void SetColor(TArray<AMyLightSourceBase*> Lights);
-
-	FVector DiffuseColor;
-
-	FVector SpecularColor;
 
 	FVector Ka;
 
@@ -72,13 +57,17 @@ private:
 	FVector AmbientColor;
 
 	FVector CameralPos;
-	
-	FVector ResultColor;
+
+	/// <summary>
+	/// 场景中的灯光
+	/// </summary>
+	TArray<AMyLightSourceBase *> LightArray;
+
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <param name="L"></param>
-	/// <param name="N"></param>
+	/// <param name="N">法线</param>
 	/// <param name="V"></param>
 	/// <param name="OutDiffuse"></param>
 	/// <param name="OutSpeculat">高光</param>

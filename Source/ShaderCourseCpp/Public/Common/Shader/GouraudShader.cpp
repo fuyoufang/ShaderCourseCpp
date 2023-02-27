@@ -93,7 +93,7 @@ void UGouraudShader::CalcuteLightIntensity(const FVector& InL, const FVector& In
 	OutSpeculat = FMath::Pow(FMath::Max(0, Temp.Dot(InN)), Shiness);
 }
 
-FVector UGouraudShader::FragmentShader(FVector InFragmentShader)
+FVector UGouraudShader::FragmentShader(FVector InFragmentColor, FVector InNormalWS, FVector InPosWS)
 {
-	return InFragmentShader;
+	return InFragmentColor;
 }

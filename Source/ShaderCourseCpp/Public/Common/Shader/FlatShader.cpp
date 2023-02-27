@@ -108,7 +108,7 @@ void UFlatShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN, 
 	}*/
 }
 
-FVector UFlatShader::FragmentShader(FVector InFragmentShader)
+FVector UFlatShader::FragmentShader(FVector InFragmentColor, FVector InNormalWS, FVector InPosWS)
 {
 	return ResultColor;
 }

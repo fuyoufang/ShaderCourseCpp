@@ -5,11 +5,11 @@
 #include "GouraudShadingGameMode.generated.h"
 
 UCLASS()
-class SHADERCOURSECPP_API AGroundShadingGameMode : public AGameModeBase
+class SHADERCOURSECPP_API AGouraudShadingGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
-	AGroundShadingGameMode();
+	AGouraudShadingGameMode();
 
 };

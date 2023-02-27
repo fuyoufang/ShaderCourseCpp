@@ -26,7 +26,7 @@ public:
 	/// <returns></returns>
 	virtual FVertexOutput VertexShader(UMyModel* Model, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD) override;
 
-	virtual FVector FragmentShader(FVector InFragmentShader) override;
+	virtual FVector FragmentShader(FVector InFragmentColor, FVector InNormalWS, FVector InPosWS) override;
 
 
 	/// <summary>

@@ -9,5 +9,6 @@ enum class EShaderType : uint8
 	EWireframeShader,
 	ESimpleShader,
 	EFlatShader,
-	EGouraudShader
+	EGouraudShader,
+	EPhongShader
 };

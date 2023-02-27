@@ -267,7 +267,7 @@ void AFlatShadingHUD::DrawTriangle(UMyModel* InModel, int32 InFaceNumber)
 						if (TempZ < ZValue)
 						{
 							MyNewFrameBuffer.ZBuffer.Add(PixelIndex, TempZ);
-							FVector Res = Shader->FragmentShader(FVector::Zero());
+							FVector Res = Shader->FragmentShader(FVector::Zero(), FVector::Zero(), FVector::Zero());
 							FPixelColor PixelColor;
 							PixelColor.X = X;
 							PixelColor.Y = Y;
