@@ -55,7 +55,7 @@ FVector UGouraudShader::GetColor(TArray<AMyLightSourceBase*> Lights)
 
 	for (const auto& Light : Lights)
 	{
-		if (!Light->IsInRange())
+		if (!Light->IsInRange(FVector::Zero()))
 		{
 			continue;
 		}

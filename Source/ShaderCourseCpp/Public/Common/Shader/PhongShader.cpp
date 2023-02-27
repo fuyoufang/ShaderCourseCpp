@@ -1,6 +1,7 @@
 #include "Common/Shader/PhongShader.h"
 #include "Third/PhongShading/PhongShadingHUD.h"
 #include "Third/GouraudShading/GouraudShadingHUD.h"
+#include "Third/PointLight/PointLightHUD.h"
 #include "Common/MyModel.h"
 #include "Common/Light/MyDirectionLight.h"
 
@@ -11,7 +12,8 @@ EShaderType UPhongShader::GetShaderType()
 
 FVertexOutput UPhongShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD)
 {
-	APhongShadingHUD* HUD = Cast<APhongShadingHUD>(InHUD);
+	//APhongShadingHUD* HUD = Cast<APhongShadingHUD>(InHUD);
+	APointLightHUD* HUD = Cast<APointLightHUD>(InHUD);
 	if (HUD == nullptr)
 	{
 		return FVertexOutput();
@@ -38,11 +40,10 @@ FVertexOutput UPhongShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int
 	N.Normalize();
 	Output.NormalWS = N;
 	// 世界坐标
-	Output.PosWS = InModel->ModelMatrix.TransformVector(Vertex);
+	Output.PosWS = InModel->ModelMatrix.TransformPosition(Vertex);
 	
 	return Output;
 }
-
 
 void UPhongShader::Init(FVector InKa, FVector InKd, FVector InKs, float InShiness, FVector InCameraPos, FVector InAmbientColor, TArray<AMyLightSourceBase*> InLightArray)
 {
@@ -74,19 +75,19 @@ FVector UPhongShader::FragmentShader(FVector InFragmentColor, FVector InNormalWS
 	FVector TempV = (CameralPos - InPosWS);
 	TempV.Normalize();
 
-	return GetColor(TempN, TempV, LightArray);
+	return GetColor(TempN, TempV, InPosWS, LightArray);
 
 	//return InFragmentColor;
 }
 
-FVector UPhongShader::GetColor(const FVector& InN, const FVector& InV, TArray<AMyLightSourceBase*> Lights)
+FVector UPhongShader::GetColor(const FVector& InN, const FVector& InV, FVector InPosWS, TArray<AMyLightSourceBase*> Lights)
 {
 	FVector DiffuseColor;
 	FVector SpecularColor;
 
 	for (const auto& Light : Lights)
 	{
-		if (!Light->IsInRange())
+		if (!Light->IsInRange(InPosWS))
 		{
 			continue;
 		}

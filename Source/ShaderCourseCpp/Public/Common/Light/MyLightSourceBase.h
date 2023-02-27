@@ -25,7 +25,7 @@ public:
 	/// <summary>
 	/// 判断物体是否在灯光照射的范围内
 	/// </summary>
-	virtual bool IsInRange() { return false; }
+	virtual bool IsInRange(FVector InWorldPos) { return false; }
 	
 	/// <summary>
 	/// 获取灯光衰减系数

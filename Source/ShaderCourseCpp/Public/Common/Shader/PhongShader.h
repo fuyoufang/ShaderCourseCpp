@@ -45,7 +45,7 @@ private:
 	
 	float Shiness;
 
-	FVector GetColor(const FVector& InN, const FVector& InV, TArray<AMyLightSourceBase*> Lights);
+	FVector GetColor(const FVector& InN, const FVector& InV, FVector InPosWS, TArray<AMyLightSourceBase*> Lights);
 
 
 	FVector Ka;
