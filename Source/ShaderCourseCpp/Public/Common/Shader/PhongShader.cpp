@@ -4,6 +4,7 @@
 #include "Third/PointLight/PointLightHUD.h"
 #include "Common/MyModel.h"
 #include "Common/Light/MyDirectionLight.h"
+#include "Common/HUD/MyHUD.h"
 
 EShaderType UPhongShader::GetShaderType()
 {
@@ -12,8 +13,7 @@ EShaderType UPhongShader::GetShaderType()
 
 FVertexOutput UPhongShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int32 InVertexNum, AHUD* InHUD)
 {
-	//APhongShadingHUD* HUD = Cast<APhongShadingHUD>(InHUD);
-	APointLightHUD* HUD = Cast<APointLightHUD>(InHUD);
+	AMyHUD* HUD = Cast<AMyHUD>(InHUD);
 	if (HUD == nullptr)
 	{
 		return FVertexOutput();

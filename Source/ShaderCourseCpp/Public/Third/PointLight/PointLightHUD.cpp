@@ -14,6 +14,8 @@ APointLightHUD::APointLightHUD()
 {
 	CameraTransform = FTransform(FRotator(), FVector());
 	MyPerspectiveInfo = FPerspectiveInfo(90, 2, 10, 1250);
+	ShaderType = EShaderType::EPhongShader;
+
 }
 
 void APointLightHUD::BeginPlay()

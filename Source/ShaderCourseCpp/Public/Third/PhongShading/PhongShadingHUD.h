@@ -10,6 +10,7 @@
 #include "Common/MyFrameBuffer.h"
 #include "Common/VertexOutput.h"
 #include "Common/ClipPlane.h"
+#include "Common/HUD/MyHUD.h"
 #include "PhongShadingHUD.generated.h"
 
 /*
@@ -17,7 +18,7 @@
 */
 
 UCLASS()
-class SHADERCOURSECPP_API APhongShadingHUD : public AHUD
+class SHADERCOURSECPP_API APhongShadingHUD : public AMyHUD
 {
 	GENERATED_BODY()
 	//GENERATED_UCLASS_BODY()
@@ -28,94 +29,7 @@ public:
 	void BeginPlay() override;
 
 	void DrawHUD() override;
-	
 
-	// 场景信息
-public: 
-	/// <summary>
-	/// the Camera Transform
-	/// </summary>
-	FTransform CameraTransform;
-
-	/// <summary>
-	/// 透视信息
-	/// </summary>
-	FPerspectiveInfo MyPerspectiveInfo;
-
-	/// <summary>
-	/// 相机矩阵
-	/// </summary>
-	FMatrix ViewMatrix;
-
-	/// <summary>
-	/// 透视矩阵
-	/// </summary>
-	FMatrix PerspectiveMatrix;
-
-	/// <summary>
-	/// CVV 空间的 w 的最小值
-	/// </summary>
-	float LittleNum = 0.001;
-
-	// 屏幕信息
-public:
-	/// <summary>
-	/// 屏幕像素的大小
-	/// </summary>
-	float GWidth = 1280;
-
-	//float GHeight = 720;
-	float GHeight = 640;
-
-	/// <summary>
-	/// 屏幕像素的坐标的最大值
-	/// </summary>
-	int32 GMaxWidthIndex;
-
-	int32 GMaxHeightIndex;
-
-	// 灯光信息
-public:
-	/// <summary>
-	/// 场景中所有的灯光
-	/// </summary>
-	TArray<class AMyLightSourceBase*> Lights;
-
-	/// <summary>
-	/// 环境光颜色
-	/// </summary>
-	FVector AmbientColor = FVector(0, 0.2, 0.3);
-
-	// 模型信息
-public:
-	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TArray<UStaticMesh*> StaticMeshs;
-
-	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TArray<FTransform> StaticMeshTransforms;
-
-	TArray<UMyModel*> MyModelArray;
-
-	FVector Ka = FVector(0.3, 0.3, 0.3);
-	FVector Kd = FVector(1, 1, 1);
-	FVector Ks = FVector(1, 1, 1);
-
-	float Shiness = 500;
-
-	//TArray<FPixelColor> MyFrameBuffer;
-
-	FMyFrameBuffer MyNewFrameBuffer;
-
-
-	// shader
-public:
-
-	/// <summary>
-	/// 着色器类型
-	/// </summary>
-	EShaderType ShaderType = EShaderType::EPhongShader;
-	//EShaderType ShaderType = EShaderType::EGouraudShader;
-	//EShaderType ShaderType = EShaderType::EFlatShader;
 private:
 
 	/// <summary>
