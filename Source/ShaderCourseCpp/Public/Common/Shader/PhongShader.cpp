@@ -36,12 +36,11 @@ FVertexOutput UPhongShader::VertexShader(UMyModel* InModel, int32 InFaceNum, int
 	//-----------
 	Output.VertexPosCVV = Matrix.TransformPosition(Vertex);
 	// 计算法线. GetTransposed 获得转置
-	FVector N = InModel->ModelMatrix.GetTransposed().TransformVector(InModel->Normals[VertexIndex]);
+	FVector N = InModel->ModelMatrix.GetTransposed().Inverse().TransformVector(InModel->Normals[VertexIndex]);
 	N.Normalize();
 	Output.NormalWS = N;
 	// 世界坐标
 	Output.PosWS = InModel->ModelMatrix.TransformPosition(Vertex);
-	
 	return Output;
 }
 
@@ -68,7 +67,6 @@ void UPhongShader::CalcuteLightIntensity(const FVector& InL, const FVector& InN,
 
 FVector UPhongShader::FragmentShader(FVector InFragmentColor, FVector InNormalWS, FVector InPosWS)
 {
-	//Output.FragmentColor = 
 	FVector TempN = InNormalWS;
 	TempN.Normalize();
 
@@ -76,8 +74,6 @@ FVector UPhongShader::FragmentShader(FVector InFragmentColor, FVector InNormalWS
 	TempV.Normalize();
 
 	return GetColor(TempN, TempV, InPosWS, LightArray);
-
-	//return InFragmentColor;
 }
 
 FVector UPhongShader::GetColor(const FVector& InN, const FVector& InV, FVector InPosWS, TArray<AMyLightSourceBase*> Lights)
